@@ -19,7 +19,7 @@
                Tambah Pengguna
             </a>
         </li> --}}
-        <li>
+        {{-- <li>
             <a href="{{ route('admin.jadwalPengawas') }}" 
                class="block px-4 py-2 rounded hover:bg-blue-100 {{ request()->routeIs('admin.jadwalPengawas') ? 'bg-blue-200 font-semibold' : '' }}">
                Jadwal Pengawas
@@ -30,6 +30,19 @@
                class="block px-4 py-2 rounded hover:bg-blue-100 {{ request()->routeIs('admin.jadwalAtlet') ? 'bg-blue-200 font-semibold' : '' }}">
                Jadwal Atlet
             </a>
+        </li> --}}
+        <li>
+            <a href="{{ route('admin.jadwalGabungan', ['type' => 'pengawas']) }}"
+            class="block px-4 py-2 rounded hover:bg-blue-100 {{ request()->is('jadwal/create/pengawas') ? 'bg-blue-200 font-semibold' : '' }}">
+            Jadwal Pengawas
+            </a>
         </li>
+        {{-- <li>
+            <a href="{{ route('admin.jadwal.create', ['type' => 'atlet']) }}" 
+            class="block px-4 py-2 rounded hover:bg-blue-100 {{ request()->is('jadwal/create/atlet') ? 'bg-blue-200 font-semibold' : '' }}">
+            Jadwal Atlet
+            </a>
+        </li> --}}
+
     </ul>
 </nav>

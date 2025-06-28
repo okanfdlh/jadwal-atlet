@@ -9,5 +9,17 @@ class Schedule extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['type', 'name', 'day', 'time'];
+    protected $fillable = ['pengawas_id', 'atlet_id', 'day', 'time', 'type'];
+
+    public function pengawas()
+    {
+        return $this->belongsTo(User::class, 'pengawas_id');
+    }
+
+    public function atlet()
+    {
+        return $this->belongsTo(User::class, 'atlet_id');
+    }
+
+
 }

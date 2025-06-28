@@ -9,30 +9,26 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AtletController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FirebaseController;
 
-
-    
 
 // Login routes
-Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/', [AuthController::class, 'login'])->name('login.submit');
+Route::get('/', function () {
+    return view('home');
+})->name('home');
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/chinup', [ChinningController::class, 'index'])->name('chinning');
 
 // Route::get('/', [BerandaController::class, 'index']);
 Route::post('/pengawas/analyze', [PengawasController::class, 'analyze'])->name('pengawas.analyze');
-Route::get('/chinup', [ChinningController::class, 'index'])->name('chinning');
 Route::post('/atur-dominasi', [ChinningController::class, 'aturDominasi'])->name('atur-dominasi');
 Route::get('/pullup', [PullupController::class, 'index'])->name('pullup.index');
 Route::post('/pullup/dominasi', [PullupController::class, 'aturDominasi'])->name('pullup.aturDominasi');
     
 
-
-
 Route::post('/jadwal/store', [ScheduleController::class, 'store'])->name('jadwal.store');
-
-
-
-
 
 
 // Role: Admin
@@ -57,6 +53,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/jadwal/{id}/edit', [AdminController::class, 'editJadwal'])->name('editJadwal');
     Route::put('/jadwal/{id}', [AdminController::class, 'updateJadwal'])->name('updateJadwal');
     Route::delete('/jadwal/{id}', [AdminController::class, 'destroyJadwal'])->name('destroyJadwal');
+    Route::get('/jadwal/create/{type}', [ScheduleController::class, 'create'])->name('jadwal.create');
+    Route::get('/jadwal-gabungan', [ScheduleController::class, 'jadwalGabungan'])->name('jadwalGabungan');
+
+
 
 
     // route jadwal.store sudah ada
@@ -73,9 +73,17 @@ Route::middleware(['auth', 'role:pengawas'])->group(function () {
     Route::get('/pengawas/input-parameter', [PengawasController::class, 'showInputParameter'])->name('pengawas.inputParameter');
     Route::post('/pengawas/analyze', [PengawasController::class, 'analyze'])->name('pengawas.analyze');
 
+    Route::get('/firebase/data', [FirebaseController::class, 'showData']);
+    Route::get('/chinup', [PengawasController::class, 'chinupDashboard'])->name('chinup.dashboard');
+    Route::post('/firebase/reset', [PengawasController::class, 'resetTimer']);
+    Route::get('/pengawas/history-monitoring', [PengawasController::class, 'historyMonitoring'])->name('pengawas.historyMonitoring');
+    Route::get('/jadwal-latihan', [PengawasController::class, 'viewJadwal'])->name('jadwal.index');
 });
 
 // Role: Atlet
 Route::middleware(['auth', 'role:atlet'])->group(function () {
     Route::get('/atlet/dashboard', [AtletController::class, 'index'])->name('atlet.dashboard');
 });
+
+//Role: Firebase
+// Route::get('/monitoring', [FirebaseController::class, 'showData']);

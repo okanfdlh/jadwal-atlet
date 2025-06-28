@@ -31,6 +31,13 @@
             <option value="atlet">Atlet</option>
             <option value="admin">Admin</option>
         </select>
+        <label class="block mb-2">Jenis Kelamin</label>
+        <select name="gender" class="w-full border p-2 rounded mb-3" required>
+            <option value="">-- Pilih Jenis Kelamin --</option>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
+        </select>
+
 
         <button class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Tambah User</button>
     </form>

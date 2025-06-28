@@ -10,12 +10,17 @@ class CreateSchedulesTable extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
-            $table->string('type'); // 'pengawas' atau 'atlet'
-            $table->string('name'); // nama pengawas atau atlet
+            $table->unsignedBigInteger('pengawas_id'); // foreign key ke users (pengawas)
+            $table->unsignedBigInteger('atlet_id');    // foreign key ke users (atlet)
             $table->date('day');
             $table->time('time');
+            $table->string('type'); // chinning atau pullup
             $table->timestamps();
+
+            $table->foreign('pengawas_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('atlet_id')->references('id')->on('users')->onDelete('cascade');
         });
+
     }
 
     public function down()

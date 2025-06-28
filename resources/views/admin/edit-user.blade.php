@@ -11,34 +11,51 @@
         &larr; Kembali
     </a>
 </div>
+
 <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
     <form method="POST" action="{{ route('admin.updateUser', $user->id) }}">
         @csrf
         @method('PUT')
 
+        {{-- Nama --}}
         <div class="mb-4">
             <label class="block text-gray-700 font-semibold mb-2">Nama</label>
             <input type="text" name="name" value="{{ old('name', $user->name) }}"
                    class="w-full border border-gray-300 p-2 rounded" required>
         </div>
 
+        {{-- Email --}}
         <div class="mb-4">
             <label class="block text-gray-700 font-semibold mb-2">Email</label>
             <input type="email" name="email" value="{{ old('email', $user->email) }}"
                    class="w-full border border-gray-300 p-2 rounded" required>
         </div>
 
+        {{-- Role --}}
         <div class="mb-4">
             <label class="block text-gray-700 font-semibold mb-2">Role</label>
-            <select name="role" class="w-full border border-gray-300 p-2 rounded">
+            <select name="role" class="w-full border border-gray-300 p-2 rounded" required>
                 <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
                 <option value="pengawas" {{ $user->role === 'pengawas' ? 'selected' : '' }}>Pengawas</option>
                 <option value="atlet" {{ $user->role === 'atlet' ? 'selected' : '' }}>Atlet</option>
             </select>
         </div>
 
+        {{-- Jenis Kelamin --}}
+        <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">Jenis Kelamin</label>
+            <select name="gender" class="w-full border border-gray-300 p-2 rounded" required>
+                <option value="">-- Pilih Jenis Kelamin --</option>
+                <option value="Laki-laki" {{ $user->gender === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                <option value="Perempuan" {{ $user->gender === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+            </select>
+        </div>
+
+        {{-- Tombol Submit --}}
         <div class="text-right">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Simpan</button>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                Simpan
+            </button>
         </div>
     </form>
 </div>

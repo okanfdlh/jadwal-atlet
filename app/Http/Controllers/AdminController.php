@@ -111,6 +111,7 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,pengawas,atlet',
+            'gender' => 'required|in:Laki-laki,Perempuan',
         ]);
 
         User::create([
@@ -118,7 +119,9 @@ class AdminController extends Controller
             'email' => $request->input('email'),
             'password' => Hash::make($request->input('password')),
             'role' => $request->input('role'),
+            'gender' => $request->input('gender'),
         ]);
+
 
         return redirect()->route('admin.daftarUser')->with('success', 'User berhasil ditambahkan.');
     }
@@ -138,13 +141,16 @@ class AdminController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $id,
                 'role' => 'required|in:admin,pengawas,atlet',
+                'gender' => 'required|in:Laki-laki,Perempuan',
             ]);
 
             $user->update([
                 'name' => $request->name,
                 'email' => $request->email,
                 'role' => $request->role,
+                'gender' => $request->gender,
             ]);
+
 
             return redirect()->route('admin.daftarUser')->with('success', 'User berhasil diperbarui.');
         } catch (\Exception $e) {

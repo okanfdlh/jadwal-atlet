@@ -19,10 +19,10 @@
                         inter: ['Inter', 'sans-serif'],
                     },
                     colors: {
-                        primary: '#4f46e5',  // indigo-600
-                        secondary: '#9333ea', // purple-600
-                        bgLight: '#f3f4f6', // gray-100
-                        sidebar: '#4f46e5'  // indigo-600
+                        primary: '#4f46e5',
+                        secondary: '#9333ea',
+                        bgLight: '#f3f4f6',
+                        sidebar: '#4f46e5'
                     }
                 }
             }
@@ -46,59 +46,39 @@
         }
     </style>
 </head>
-<body class="bg-bgLight min-h-screen flex text-gray-800 font-inter">
+<body class="bg-bgLight min-h-screen text-gray-800 font-inter">
 
-    <!-- Sidebar -->
-    <aside class="w-64 min-h-screen bg-gradient-to-b from-primary to-blue-400 text-white p-6 shadow-xl sticky top-0">
-        <h1 class="text-2xl font-bold text-center mb-10 tracking-wide"> IoT Fitness</h1>
-
-        <nav class="grid gap-5">
-            <!-- Card Chinning Up -->
-            <a href="{{ route('chinning') }}"
-               class="bg-gradient-to-r from-indigo-500 to-indigo-300 text-white rounded-xl p-4 shadow-md hover:shadow-xl transition duration-300 flex items-center space-x-3">
-                <div class="text-2xl">🤸‍♀️</div>
-                <div class="font-semibold">Chinning Up</div>
-            </a>
-
-            <!-- Card Pull Up -->
-            <a href="{{ route('pullup.index') }}"
-               class="bg-gradient-to-r from-purple-500 to-purple-300 text-white rounded-xl p-4 shadow-md hover:shadow-xl transition duration-300 flex items-center space-x-3">
-                <div class="text-2xl">🤸‍♂️</div>
-                <div class="font-semibold">Pull Up</div>
-            </a>
-        </nav>
-    </aside>
+    <!-- Navbar -->
+    <nav class="w-full bg-white shadow-md py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl font-extrabold text-primary">IoT Fitness</span>
+        </div>
+        <div class="hidden md:flex space-x-6 font-medium text-gray-700">
+            <a href="{{ route('pengawas.index') }}" class="hover:text-primary transition">Dashboard</a>
+            <a href="{{ route('pengawas.inputParameter', ['jenis' => 'chinning']) }}" class="hover:text-primary transition">Input Chinning</a>
+            <a href="{{ route('pengawas.inputParameter', ['jenis' => 'pullup']) }}" class="hover:text-primary transition">Input Pull-up</a>
+            <a href="{{ route('jadwal.index') }}" class="hover:text-primary transition">Jadwal Latihan</a>
+            <a href="{{ route('pengawas.historyMonitoring') }}" class="hover:text-primary transition">Riwayat</a>
+        </div>
+        <form action="{{ route('logout') }}" method="POST" class="ml-4">
+            @csrf
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow transition text-sm">
+                Logout
+            </button>
+        </form>
+    </nav>
 
     <!-- Main Content -->
-    <!-- Main Content -->
-<main class="flex-1 p-8 overflow-y-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-        <div>
+    <main class="p-6 max-w-7xl mx-auto mt-8">
+        <div class="mb-6">
             <h2 class="text-3xl font-bold text-blue-800 drop-shadow">👨‍🏫 Dashboard Pengawas</h2>
             <p class="text-gray-600 mt-1 text-lg">Formulir Input & Analisis Data Atlet</p>
         </div>
 
-        <!-- Tombol Logout -->
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m0-8v1a3 3 0 006 0V7" />
-                </svg>
-                Logout
-            </button>
-        </form>
-    </div>
-
-    <!-- Konten halaman -->
-    <div class="bg-white p-6 rounded-lg shadow">
-        @yield('content')
-    </div>
-</main>
-
-
+        <div class="bg-white p-6 rounded-lg shadow">
+            @yield('content')
+        </div>
+    </main>
+@yield('scripts')
 </body>
 </html>
