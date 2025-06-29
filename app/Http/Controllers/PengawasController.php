@@ -25,18 +25,62 @@ class PengawasController extends Controller
         $totalAtlet = User::where('role', 'atlet')->count();
         $totalJadwal = Schedule::count();
 
-        $data = HasilLatihan::orderBy('created_at')->take(10)->get();
+        // Ambil 10 data hasil latihan terbaru untuk grafik
+        // Pastikan ada data yang cukup untuk ditampilkan
+        $dataHasilLatihan = HasilLatihan::orderBy('created_at', 'asc')->get(); // Ambil semua data atau sesuaikan batas jika perlu
 
-        return view('pengawas.dashboard', [
+        // Data untuk Grafik Monitoring Atlet
+        $labelsMonitoring = $dataHasilLatihan->pluck('created_at')->map(fn($date) => $date->format('d M'))->toArray();
+        $berat = $dataHasilLatihan->pluck('berat')->toArray();
+        $repitisi = $dataHasilLatihan->pluck('repitisi')->toArray();
+        $otot_kanan = $dataHasilLatihan->pluck('otot_kanan')->toArray();
+        $otot_kiri = $dataHasilLatihan->pluck('otot_kiri')->toArray();
+
+        // Data untuk Grafik Skor Latihan Atlet
+        // Menggunakan label tanggal yang sama dengan monitoring agar mudah dibandingkan
+        $labelsSkor = $labelsMonitoring; // Atau bisa gunakan $dataHasilLatihan->pluck('jenis_latihan')->toArray() jika ingin labelnya jenis latihan
+        $skor = $dataHasilLatihan->map(function ($item) {
+            return match ($item->skor) {
+                'Sempurna' => 100,
+                'Baik Sekali' => 80,
+                'Baik' => 60,
+                'Cukup' => 40,
+                'Kurang' => 20,
+                'Sangat Kurang' => 10,
+                default => 0, // Nilai default jika skor tidak dikenali
+            };
+        })->toArray();
+        $skor_kategori = $dataHasilLatihan->pluck('skor')->toArray(); // Digunakan untuk tooltip
+
+        // Data monitoring tambahan (misal repitisi rata-rata per hari) - ini tidak dipakai di view dashboard saat ini
+        $monitoringData = HasilLatihan::select(DB::raw('DATE(created_at) as date'), DB::raw('AVG(repitisi) as avg_repitisi'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->take(10)
+            ->get();
+
+        return view('pengawas.dashboard', [ // Pastikan ini mengarah ke view yang benar, sebelumnya 'pengawas.dashboard'
             'totalAtlet' => $totalAtlet,
             'totalJadwal' => $totalJadwal,
-            'labels' => $data->pluck('created_at')->map(fn($date) => $date->format('d M'))->toArray(),
-            'berat' => $data->pluck('berat')->toArray(),
-            'repitisi' => $data->pluck('repitisi')->toArray(),
-            'otot_kanan' => $data->pluck('otot_kanan')->toArray(),
-            'otot_kiri' => $data->pluck('otot_kiri')->toArray(),
+
+            // Data untuk Grafik Monitoring
+            'labelsMonitoring' => $labelsMonitoring,
+            'berat' => $berat,
+            'repitisi' => $repitisi,
+            'otot_kanan' => $otot_kanan,
+            'otot_kiri' => $otot_kiri,
+
+            // Data untuk Grafik Skor
+            'labelsSkor' => $labelsSkor,
+            'skor' => $skor,
+            'skor_kategori' => $skor_kategori,
+            'jenis_latihan' => $dataHasilLatihan->pluck('jenis_latihan')->toArray(), // Mungkin tidak perlu di sini jika tidak digunakan di grafik
+
+            // Data monitoring tambahan (jika diperlukan di masa mendatang)
+            'monitoring_labels' => $monitoringData->pluck('date')->map(fn($d) => Carbon::parse($d)->format('d M'))->toArray(),
+            'monitoring_avg_repitisi' => $monitoringData->pluck('avg_repitisi')->toArray(),
         ]);
-    }   
+    }
     public function showJenisLatihan()
     {
         return view('pengawas.jenis-latihan');
@@ -69,6 +113,30 @@ class PengawasController extends Controller
 
         return view('pengawas.jadwal-index', compact('jadwals', 'filter'));
     }
+    private function hitungSkor($jenisLatihan, $waktu, $repetisi)
+    {
+        $menit = max(1, round($waktu / 60)); // minimal 1 menit untuk pembagi
+        $perMenit = $repetisi / $menit;
+
+        if ($jenisLatihan === 'pullup') {
+            if ($perMenit > 17) return 'Sempurna';
+            if ($perMenit >= 13) return 'Baik Sekali';
+            if ($perMenit >= 7) return 'Baik';
+            if ($perMenit >= 4) return 'Cukup';
+            if ($perMenit >= 1) return 'Kurang';
+            return 'Sangat Kurang';
+        }
+
+        if ($jenisLatihan === 'chinning') {
+            if ($perMenit > 72) return 'Sempurna';
+            if ($perMenit >= 60) return 'Baik Sekali';
+            if ($perMenit >= 50) return 'Baik';
+            if ($perMenit >= 40) return 'Cukup';
+            return 'Kurang';
+        }
+
+        return '-';
+    }
     // Tampilkan form input parameter sesuai jenis latihan yg dipilih
    public function showInputParameter(Request $request)
     {
@@ -79,99 +147,93 @@ class PengawasController extends Controller
         }
 
         $now = Carbon::now(); // tanggal & waktu sekarang
-        $today = $now->format('Y-m-d');
+        $today = Carbon::now()->toDateString(); // "2025-06-29"
         $currentTime = $now->format('H:i:s');
 
         $todayDay = strtolower(Carbon::now()->locale('id')->dayName); // contoh: 'senin'
 
         $jadwal = Schedule::with(['atlet', 'pengawas'])
             ->where('type', $jenis)
-            ->where('day', $todayDay)
-            ->whereTime('time', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('time')
+            ->whereDate('day', $today)
+            // ->whereTime('time', '>=', Carbon::now()->format('H:i:s'))
+            ->orderBy('time')   
             ->get();
 
         return view('pengawas.input-parameter', compact('jenis', 'jadwal'));
     }
     public function analyze(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
+            'jenis_latihan' => 'required|in:pullup,chinning',
             'tanggal_lahir' => 'required|date',
-            'jenis_kelamin' => 'required|string',
+            'jenis_kelamin' => 'required',
             'berat' => 'required|numeric',
             'tinggi' => 'required|numeric',
             'otot_kanan' => 'required|numeric',
             'otot_kiri' => 'required|numeric',
             'repitisi' => 'required|numeric',
-            'waktu_firebase' => 'required|string',
+            'waktu_firebase' => 'required|numeric',
         ]);
 
+        // Hitung skor berdasarkan jenis dan waktu
+        $skor = $this->hitungSkor($data['jenis_latihan'], $data['waktu_firebase'], $data['repitisi']);
+
+
+
+        // Simpan ke database (contoh ke tabel hasil_latihans)
         HasilLatihan::create([
-            'schedule_id' => $validated['schedule_id'],
-            'tanggal_lahir' => $validated['tanggal_lahir'],
-            'jenis_kelamin' => $validated['jenis_kelamin'],
-            'berat' => $validated['berat'],
-            'tinggi' => $validated['tinggi'],
-            'otot_kanan' => $validated['otot_kanan'],
-            'otot_kiri' => $validated['otot_kiri'],
-            'repitisi' => $validated['repitisi'],
-            'waktu_firebase' => $validated['waktu_firebase'],
+            'schedule_id' => $data['schedule_id'],
+            'jenis_latihan' => $data['jenis_latihan'],
+            'tanggal_lahir' => $data['tanggal_lahir'],
+            'jenis_kelamin' => $data['jenis_kelamin'],
+            'berat' => $data['berat'],
+            'tinggi' => $data['tinggi'],
+            'otot_kanan' => $data['otot_kanan'],
+            'otot_kiri' => $data['otot_kiri'],
+            'repitisi' => $data['repitisi'],
+            'waktu' => $data['waktu_firebase'], // waktu dalam detik
+            'skor' => $skor,
         ]);
 
-        return redirect()->route('chinup.dashboard')->with('success', 'Hasil latihan berhasil disimpan.');
+        return redirect()->route('chinup.dashboard')->with('success', 'Data berhasil disimpan!');
     }
 
    public function chinupDashboard()
     {
-        try {
-            $db = $this->firebase->getDatabase();
+        // Ambil data terakhir yang disimpan ke database
+        $lastResult = HasilLatihan::latest()->first();
 
-            // Ambil semua history
-            $history = $db->getReference('History')->getValue();
-
-            if (!$history || !is_array($history)) {
-                return view('pengawas.chinup-dashboard', [
-                    'otot_kanan' => 0,
-                    'otot_kiri' => 0,
-                    'repitisi' => 0,
-                    'score' => 0,
-                    'training_time' => 0,
-                    'waktu' => '-',
-                    'dominasi_otot' => 'kanan'
-                ]);
-            }
-
-            // Urutkan berdasarkan field 'Waktu' DESC
-            $lastData = collect($history)
-                ->filter(fn($item) => isset($item['Waktu']))
-                ->sortByDesc(fn($item) => strtotime($item['Waktu']))
-                ->first();
-
-            $ototKanan = (int)($lastData['Otot_Kanan'] ?? 0);
-            $ototKiri  = (int)($lastData['Otot_Kiri'] ?? 0);
-            $repitisi  = (int)($lastData['Repitisi'] ?? 0);
-            $waktu     = $lastData['Waktu'] ?? now()->toDateTimeString();
-
-            $score = $repitisi * 10;
-            $training_time = $repitisi * 0.5;
-
-            $dominasi_otot = ($ototKanan > $ototKiri) ? 'kanan' : 'kiri';
-
+        if (!$lastResult) {
             return view('pengawas.chinup-dashboard', [
-                'otot_kanan' => $ototKanan,
-                'otot_kiri' => $ototKiri,
-                'repitisi' => $repitisi,
-                'score' => $score,
-                'training_time' => $training_time,
-                'waktu' => $waktu,
-                'dominasi_otot' => $dominasi_otot,
+                'otot_kanan' => 0,
+                'otot_kiri' => 0,
+                'repitisi' => 0,
+                'score' => '-',
+                'training_time' => 0,
+                'waktu' => '-',
+                'dominasi_otot' => '-'
             ]);
-        } catch (\Exception $e) {
-            \Log::error('Gagal ambil data Firebase: ' . $e->getMessage());
-            return view('pengawas.chinup-dashboard')->withErrors(['firebase' => 'Gagal mengambil data.']);
         }
+
+        $score = $lastResult->skor;
+        $repitisi = $lastResult->repitisi;
+        $training_time = round($lastResult->waktu / 60, 2); // waktu dalam menit
+
+        $dominasi_otot = ($lastResult->otot_kanan > $lastResult->otot_kiri) ? 'kanan' : 'kiri';
+
+        return view('pengawas.chinup-dashboard', [
+            'otot_kanan' => $lastResult->otot_kanan,
+            'otot_kiri' => $lastResult->otot_kiri,
+            'repitisi' => $repitisi,
+            'score' => $score,
+            'skor' => $score,
+            'training_time' => $training_time,
+            'waktu' => $lastResult->created_at->format('d M Y H:i'),
+            'dominasi_otot' => $dominasi_otot,
+        ]);
     }
+
     public function resetTimer(Request $request)
     {
         $this->firebase->getDatabase()

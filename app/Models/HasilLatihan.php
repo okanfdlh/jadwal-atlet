@@ -9,7 +9,7 @@ class HasilLatihan extends Model
         protected $fillable = [
         'schedule_id', 'tanggal_lahir', 'jenis_kelamin',
         'berat', 'tinggi', 'otot_kanan', 'otot_kiri',
-        'repitisi', 'waktu_firebase'
+        'repitisi', 'waktu', 'skor'
     ];
     public function schedule()
     {

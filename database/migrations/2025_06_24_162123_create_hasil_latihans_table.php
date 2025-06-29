@@ -21,7 +21,8 @@ return new class extends Migration
             $table->float('otot_kanan');
             $table->float('otot_kiri');
             $table->integer('repitisi');
-            $table->string('waktu_firebase');
+            $table->string('waktu');
+            $table->string('skor')->nullable();
             $table->timestamps();
         });
 

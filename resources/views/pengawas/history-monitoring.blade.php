@@ -36,7 +36,8 @@
                     <th class="px-4 py-2 text-left">Otot Kanan</th>
                     <th class="px-4 py-2 text-left">Otot Kiri</th>
                     <th class="px-4 py-2 text-left">Repetisi</th>
-                    <th class="px-4 py-2 text-left">Waktu</th>
+                    <th class="px-4 py-2 text-left">Skor</th>
+                    <th class="px-4 py-2 text-left">Waktu (menit)</th>
                 </tr>
             </thead>
             <tbody class="text-sm">
@@ -47,7 +48,7 @@
                     @endphp
                     <tr class="border-t hover:bg-blue-50">
                         <td class="px-4 py-2">{{ $histories->firstItem() + $index }}</td>
-                        <td class="px-4 py-2">{{ $atlet->name ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ $history->schedule->atlet->name ?? '-' }}</td>
                         <td class="px-4 py-2">{{ \Carbon\Carbon::parse($history->created_at)->format('d M Y') }}</td>
                         <td class="px-4 py-2">{{ $jenisLatihan }}</td>
                         <td class="px-4 py-2">{{ $history->berat }}</td>
@@ -55,7 +56,9 @@
                         <td class="px-4 py-2">{{ $history->otot_kanan }}</td>
                         <td class="px-4 py-2">{{ $history->otot_kiri }}</td>
                         <td class="px-4 py-2">{{ $history->repitisi }}</td>
-                        <td class="px-4 py-2">{{ $history->waktu_firebase }}</td>
+                        <td class="px-4 py-2">{{ $history->skor ?? '-' }}</td>
+                        <td class="px-4 py-2">{{ number_format($history->waktu / 60, 2) }}</td>
+
                     </tr>
                 @empty
                     <tr>

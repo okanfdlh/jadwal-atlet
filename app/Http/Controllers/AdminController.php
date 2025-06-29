@@ -6,12 +6,55 @@ use App\Models\User;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Models\HasilLatihan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class AdminController extends Controller
 {
     public function index()
     {
-        return view('admin.dashboard');
+        $totalUsers = User::count();
+        $totalAtlet = User::where('role', 'atlet')->count();
+        $jadwalHariIni = Schedule::whereDate('day', today())->count();
+
+        // Ambil skor per atlet untuk 7 hari terakhir
+        $weeklySkor = HasilLatihan::with('schedule.atlet')
+            ->whereHas('schedule', function ($query) {
+                $query->whereBetween('day', [now()->subDays(6)->toDateString(), now()->toDateString()]);
+            })
+            ->get();
+
+        // Format skor menjadi angka dan kelompokkan berdasarkan atlet
+        $skorGrouped = $weeklySkor->groupBy(fn($item) => $item->schedule->atlet->name ?? 'Tanpa Nama');
+
+        $labels = [];
+        $skorData = [];
+
+        foreach ($skorGrouped as $nama => $items) {
+            $labels[] = $nama;
+            $avgScore = $items->map(function ($m) {
+                return match ($m->skor) {
+                    'Sempurna' => 100,
+                    'Baik Sekali' => 80,
+                    'Baik' => 60,
+                    'Cukup' => 40,
+                    'Kurang' => 20,
+                    'Sangat Kurang' => 10,
+                    default => 0,
+                };
+            })->avg();
+
+            $skorData[] = round($avgScore, 1);
+        }
+
+        return view('admin.dashboard', compact(
+            'totalUsers',
+            'totalAtlet',
+            'jadwalHariIni',
+            'labels',
+            'skorData'
+        ));
     }
 
     public function daftarUser(Request $request)
@@ -33,11 +76,11 @@ class AdminController extends Controller
         return view('admin.daftar-user', compact('users'));
     }
 
-
     public function tambahUser()
     {
         return view('admin.tambah-user');
     }
+
     public function tambahPengawas()
     {
         // Ambil user dengan role pengawas
@@ -45,7 +88,6 @@ class AdminController extends Controller
 
         return view('admin.tambah-pengawas', compact('pengawas'));
     }
-
 
     public function jadwalPengawas(Request $request)
     {
@@ -73,36 +115,33 @@ class AdminController extends Controller
     }
 
     public function jadwalAtlet(Request $request)
-        {
-            $query = Schedule::where('type', 'atlet');
+    {
+        $query = Schedule::where('type', 'atlet');
 
-            // Filter berdasarkan nama
-            if ($request->filled('search')) {
-                $query->where('name', 'like', '%' . $request->search . '%');
-            }
-
-            // Filter berdasarkan tanggal
-            if ($request->filled('date')) {
-                $query->whereDate('day', $request->date);
-            }
-
-            $jadwals = $query->orderBy('day', 'asc')
-                            ->orderBy('time', 'asc')
-                            ->paginate(10);
-
-            $jadwals->appends($request->all());
-
-            return view('admin.jadwal-atlet', compact('jadwals'));
+        // Filter berdasarkan nama
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
+        // Filter berdasarkan tanggal
+        if ($request->filled('date')) {
+            $query->whereDate('day', $request->date);
+        }
+
+        $jadwals = $query->orderBy('day', 'asc')
+                        ->orderBy('time', 'asc')
+                        ->paginate(10);
+
+        $jadwals->appends($request->all());
+
+        return view('admin.jadwal-atlet', compact('jadwals'));
+    }
 
     public function tambahAtlet()
     {
         $atlets = User::where('role', 'atlet')->get();
         return view('admin.tambah-atlet', compact('atlets'));
     }
-    
-
 
     public function storeUser(Request $request)
     {
@@ -122,10 +161,9 @@ class AdminController extends Controller
             'gender' => $request->input('gender'),
         ]);
 
-
         return redirect()->route('admin.daftarUser')->with('success', 'User berhasil ditambahkan.');
     }
-    // USER
+
     public function editUser($id)
     {
         $user = User::findOrFail($id);
@@ -151,7 +189,6 @@ class AdminController extends Controller
                 'gender' => $request->gender,
             ]);
 
-
             return redirect()->route('admin.daftarUser')->with('success', 'User berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->route('admin.daftarUser')->with('error', 'Gagal memperbarui user.');
@@ -170,9 +207,6 @@ class AdminController extends Controller
         }
     }
 
-
-
-    // JADWAL
     public function editJadwal($id)
     {
         $jadwal = Schedule::findOrFail($id);
@@ -202,14 +236,13 @@ class AdminController extends Controller
             return redirect()->route('admin.jadwalAtlet')->with('success', 'Jadwal berhasil diperbarui.');
         }
 
-        // Default fallback redirect
         return redirect()->route('admin.dashboard')->with('success', 'Jadwal berhasil diperbarui.');
     }
 
     public function destroyJadwal($id)
     {
         $jadwal = Schedule::findOrFail($id);
-        $type = $jadwal->type;  // Simpan tipe dulu sebelum dihapus
+        $type = $jadwal->type;
         $jadwal->delete();
 
         if ($type === 'pengawas') {
@@ -220,6 +253,4 @@ class AdminController extends Controller
 
         return redirect()->route('admin.dashboard')->with('success', 'Jadwal berhasil dihapus.');
     }
-
-
 }

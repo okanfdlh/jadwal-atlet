@@ -31,6 +31,22 @@
             </div>
         </div>
     </div>
+    <div class="grid grid-cols-2 gap-6 mt-4">
+        <div>
+            <label class="block font-medium mb-1">Repetisi</label>
+            <input type="number" value="{{ $repitisi }}" class="w-full p-2 border rounded" readonly>
+        </div>
+        <div>
+            <label class="block font-medium mb-1">Dominasi Otot</label>
+            <input type="text" value="{{ ucfirst($dominasi_otot) }}" class="w-full p-2 border rounded" readonly>
+        </div>
+    </div>
+    {{-- <div class="grid grid-cols-2 gap-6 mt-4">
+        <div>
+            <label class="block font-medium mb-1">Skor</label>
+            <input type="number" value="{{ $skor }}" class="w-full p-2 border rounded" readonly>
+        </div>
+    </div> --}}
 </div>
     {{-- Tombol Lihat History --}}
     <div class="text-center mt-6">

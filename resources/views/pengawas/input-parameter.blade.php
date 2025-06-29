@@ -155,15 +155,20 @@
     });
 </script>
 <script>
+let timerInterval;
+let timerSeconds = 0;
+
 function startTimer() {
-    fetch("{{ url('/firebase/start-timer') }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({ reset: false }) // Mulai timer
-    });
+    timerSeconds = 0;
+    clearInterval(timerInterval);
+    document.getElementById('timer-display').classList.remove('hidden');
+
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+        const secs = String(timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `${mins}:${secs}`;
+    }, 1000);
 }
 
 function resetTimer() {
@@ -173,9 +178,18 @@ function resetTimer() {
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": "{{ csrf_token() }}"
         },
-        body: JSON.stringify({ reset: true }) // Setel reset true
+        body: JSON.stringify({ reset: true })
     });
+
+    clearInterval(timerInterval);
+
+    // Simpan detik ke input hidden
+    document.getElementById('input-waktu-firebase').value = timerSeconds;
+
+    document.getElementById('timer').textContent = "00:00";
+    document.getElementById('timer-display').classList.add('hidden');
 }
+
 </script>
 <script>
     let timerInterval;

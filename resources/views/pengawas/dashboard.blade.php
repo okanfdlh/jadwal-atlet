@@ -3,7 +3,6 @@
 @section('title', 'Halaman Pengawas - Dashboard & Analisis Atlet')
 
 @section('content')
-<!-- Ringkasan -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
     <div class="bg-white shadow rounded-xl p-6">
         <h3 class="text-sm font-medium text-gray-500">Total Atlet</h3>
@@ -19,25 +18,30 @@
     </div>
 </div>
 
-<!-- Grafik Monitoring -->
 <div class="bg-white shadow rounded-xl p-6">
     <h3 class="text-xl font-semibold text-blue-700 mb-4">📈 Grafik Monitoring Atlet</h3>
     <canvas id="grafikMonitoring" height="120"></canvas>
 </div>
+<div class="bg-white shadow rounded-xl p-6 mt-10">
+    <h3 class="text-xl font-semibold text-red-600 mb-4">🏅 Grafik Skor Latihan Atlet</h3>
+    <canvas id="grafikSkor" height="120"></canvas>
+</div>
+
 @endsection
 
 @section('scripts')
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('grafikMonitoring');
+    // --- Grafik Monitoring Atlet ---
+    const ctxMonitoring = document.getElementById('grafikMonitoring');
 
-    if (ctx) {
-        new Chart(ctx, {
+    if (ctxMonitoring) {
+        new Chart(ctxMonitoring, {
             type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!}, // Tanggal monitoring
+                // Perbaikan di sini: Menggunakan $labelsMonitoring
+                labels: {!! json_encode($labelsMonitoring) !!}, // Tanggal monitoring
                 datasets: [
                     {
                         label: 'Berat Badan (kg)',
@@ -92,6 +96,77 @@ document.addEventListener('DOMContentLoaded', function () {
                 scales: {
                     y: {
                         beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Grafik Skor Latihan Atlet ---
+    const skorCtx = document.getElementById('grafikSkor');
+    const skorLabelsKategori = {!! json_encode($skor_kategori) !!};
+
+    if (skorCtx) {
+        new Chart(skorCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($labelsSkor) !!}, // Menggunakan $labelsSkor
+                datasets: [{
+                    label: 'Skor Latihan',
+                    data: {!! json_encode($skor) !!},
+                    backgroundColor: '#ef4444',
+                    borderColor: '#dc2626',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const label = skorLabelsKategori[index] ?? '';
+                                return `Skor: ${label}`;
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                const map = {
+                                    10: 'Sangat Kurang',
+                                    20: 'Kurang',
+                                    40: 'Cukup',
+                                    60: 'Baik',
+                                    80: 'Baik Sekali',
+                                    100: 'Sempurna'
+                                };
+                                return map[value] || value;
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Skor'
+                        }
+                    } ,
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tanggal'
+                        }
                     }
                 }
             }
